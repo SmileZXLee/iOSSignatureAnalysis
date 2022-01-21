@@ -22,6 +22,7 @@
 		0404E8A2279955AC0014F95B /* Base64.m in Sources */ = {isa = PBXBuildFile; fileRef = 0404E89E279955AC0014F95B /* Base64.m */; };
 		0404E8A3279955AC0014F95B /* CocoaSecurity.m in Sources */ = {isa = PBXBuildFile; fileRef = 0404E8A0279955AC0014F95B /* CocoaSecurity.m */; };
 		0404E8A7279A5FA70014F95B /* HttpRequest.m in Sources */ = {isa = PBXBuildFile; fileRef = 0404E8A5279A5FA70014F95B /* HttpRequest.m */; };
+		0404E8AB279AD7040014F95B /* MBProgressHUD.m in Sources */ = {isa = PBXBuildFile; fileRef = 0404E8A9279AD7030014F95B /* MBProgressHUD.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -69,6 +70,8 @@
 		0404E8A0279955AC0014F95B /* CocoaSecurity.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CocoaSecurity.m; sourceTree = "<group>"; };
 		0404E8A5279A5FA70014F95B /* HttpRequest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = HttpRequest.m; sourceTree = "<group>"; };
 		0404E8A6279A5FA70014F95B /* HttpRequest.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = HttpRequest.h; sourceTree = "<group>"; };
+		0404E8A9279AD7030014F95B /* MBProgressHUD.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MBProgressHUD.m; sourceTree = "<group>"; };
+		0404E8AA279AD7030014F95B /* MBProgressHUD.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MBProgressHUD.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -156,6 +159,7 @@
 		0404E893279955750014F95B /* ThirdParty */ = {
 			isa = PBXGroup;
 			children = (
+				0404E8A8279AD7030014F95B /* MBProgressHUD */,
 				0404E898279955AC0014F95B /* Encryption */,
 				0404E894279955A00014F95B /* Toast */,
 			);
@@ -207,6 +211,15 @@
 				0404E8A5279A5FA70014F95B /* HttpRequest.m */,
 			);
 			path = HttpRequest;
+			sourceTree = "<group>";
+		};
+		0404E8A8279AD7030014F95B /* MBProgressHUD */ = {
+			isa = PBXGroup;
+			children = (
+				0404E8A9279AD7030014F95B /* MBProgressHUD.m */,
+				0404E8AA279AD7030014F95B /* MBProgressHUD.h */,
+			);
+			path = MBProgressHUD;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -346,6 +359,7 @@
 				0404E860279952C20014F95B /* AppDelegate.m in Sources */,
 				0404E871279952C50014F95B /* main.m in Sources */,
 				0404E897279955A00014F95B /* UIView+Toast.m in Sources */,
+				0404E8AB279AD7040014F95B /* MBProgressHUD.m in Sources */,
 				0404E863279952C20014F95B /* SceneDelegate.m in Sources */,
 				0404E8A3279955AC0014F95B /* CocoaSecurity.m in Sources */,
 			);

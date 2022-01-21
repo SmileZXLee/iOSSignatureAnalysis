@@ -28,12 +28,14 @@ public class CommonResponse<T> {
     public CommonResponse<T> success(){
         this.code = commonSuccessCode;
         this.message = "success";
+        System.out.println("响应=> " + this.toString());
         return this;
     }
 
     public CommonResponse<T> error(String message){
         this.code = commonErrorCode;
         this.message = message;
+        System.out.println("响应=> " + this.toString());
         return this;
     }
 }

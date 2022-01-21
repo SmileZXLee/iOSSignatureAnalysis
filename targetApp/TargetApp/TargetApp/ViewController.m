@@ -32,8 +32,8 @@
         NSString *account = self.accountTf.text;
         NSString *password = [EncryptionTool aesEncrypt:self.pwdTf.text key:@"xsahdjsad890dsaf"];
         [HttpRequest postInterface:@"/login" postData:@{@"account":account,@"password":password} callBack:^(BOOL result, id  _Nonnull data) {
-            if(result){
-                NSLog(@"%@",data);
+            if(result && data){
+                
                 int code = [data[@"code"] intValue];
                 NSString *msg = data[@"message"];
                 if(code == 0){
@@ -41,6 +41,8 @@
                 }else{
                     [self.view makeToast:msg duration:1.5 position:CSToastPositionCenter];
                 }
+            }else{
+                [self.view makeToast:@"请求失败" duration:1.5 position:CSToastPositionCenter];
             }
         }];
     }else{

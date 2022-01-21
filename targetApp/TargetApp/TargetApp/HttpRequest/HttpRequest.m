@@ -8,8 +8,10 @@
 
 #import "HttpRequest.h"
 #import "EncryptionTool.h"
+#import "MBProgressHUD.h"
 #define TimeOutSec 10
-#define kMainUrl @"http://localhost:8080/api/v1"
+//#define kMainUrl @"http://localhost:8080/api/v1"
+#define kMainUrl @"http://api.zxlee.cn:6303/api/v1"
 @implementation HttpRequest
 #pragma mark POST请求
 +(void)postInterface:(NSString *)interface postData:(id)postData callBack:(kGetDataEventHandler)_result{
@@ -21,6 +23,7 @@
 }
 #pragma mark 基础请求
 +(void)baseInterface:(NSString *)interface postData:(id)postData callBack:(kGetDataEventHandler)_result{
+    [MBProgressHUD showHUDAddedTo:[UIApplication sharedApplication].keyWindow animated:YES];
     NSString *urlStr = [NSString stringWithFormat:@"%@%@",kMainUrl,interface];
     NSURL *url = [NSURL URLWithString:urlStr];
     NSMutableURLRequest *mr = [NSMutableURLRequest requestWithURL:url];
@@ -38,7 +41,7 @@
     }
     mr.timeoutInterval = TimeOutSec;
     [NSURLConnection sendAsynchronousRequest:mr queue:[NSOperationQueue mainQueue] completionHandler:^(NSURLResponse * _Nullable response, NSData * _Nullable data, NSError * _Nullable connectionError) {
-        
+        [MBProgressHUD hideHUDForView:[UIApplication sharedApplication].keyWindow animated:YES];
         if (connectionError) {
             _result(NO,connectionError);
         }else{
@@ -87,7 +90,6 @@
     }
     sumStr = [NSString stringWithFormat:@"mysign$#@%@%@%@csjnjksadh",interface,sumStr,dic[@"timestamp"]];
     NSString *sign = [EncryptionTool md5Hex:[NSString stringWithFormat:@"%@",sumStr]];
-    NSLog(@"%@",sumStr);
     return sign;
 }
 +(NSString *)getTimeStamp{

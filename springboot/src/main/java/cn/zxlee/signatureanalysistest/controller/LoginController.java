@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class LoginController {
     @RequestMapping("/login")
     public CommonResponse login(@RequestBody LoginVO vo) {
-        System.out.println("入参=> " + vo.toString());
+        System.out.println("请求参数=> " + vo.toString());
 
         //签名校验
         //一般放在拦截器/过滤器中统一处理，此处为了方便直接写在控制器中
