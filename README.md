@@ -238,10 +238,10 @@
 
   ```json
   {
-  	"password": "cbBIs8XOZJ2L5YjfuaOLAQ==",
-  	"account": "zxlee",
-  	"timestamp": "1642929374691",
-  	"sign": "469751ce43abf684e8fbf6786d8343b0"
+    "password": "cbBIs8XOZJ2L5YjfuaOLAQ==",
+    "account": "zxlee",
+    "timestamp": "1642929374691",
+    "sign": "469751ce43abf684e8fbf6786d8343b0"
   }
   ```
 
@@ -249,9 +249,9 @@
 
   ```json
   {
-  	"message": "success",
-  	"code": 0,
-  	"data": "登录成功"
+    "message": "success",
+    "code": 0,
+    "data": "登录成功"
   }
   ```
 
@@ -259,9 +259,9 @@
 
   ```json
   {
-  	"message": "签名校验失败",
-  	"code": 400,
-  	"data": null
+    "message": "签名校验失败",
+    "code": 400,
+    "data": null
   }
   ```
 
@@ -269,9 +269,9 @@
 
   ```json
   {
-  	"message": "签名校验失败",
-  	"code": 400,
-  	"data": null
+    "message": "签名校验失败",
+    "code": 400,
+    "data": null
   }
   ```
 
