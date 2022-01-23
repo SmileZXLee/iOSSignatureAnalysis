@@ -65,7 +65,7 @@
 * 在`HttpRequest`的`postInterface`方法中获取sign和timestamp
 
   ```objective-c
-  +(void)postInterface:(NSString *)interface postData:(id)postData callBack:(kGetDataEventHandler)_result{
+  + (void)postInterface:(NSString *)interface postData:(id)postData callBack:(kGetDataEventHandler)_result {
       NSString *urlStr = [NSString stringWithFormat:@"%@%@",kMainUrl,interface];
       NSURL *url = [NSURL URLWithString:urlStr];
       NSMutableURLRequest *mr = [NSMutableURLRequest requestWithURL:url];
@@ -95,7 +95,7 @@
 * 在`HttpRequest`的`getSignWithDic`方法中计算sign
 
   ```objective-c
-  +(NSString *)getSignWithDic:(NSDictionary *)dic interface:(NSString *)interface{
+  + (NSString *)getSignWithDic:(NSDictionary *)dic interface:(NSString *)interface {
       //将请求体中的key按照a-z排列
       NSArray *sortedKeys = [[dic allKeys] sortedArrayUsingSelector: @selector(compare:)];
       NSString *sumStr = @"";
@@ -276,6 +276,112 @@
   ```
 
   经过测试，各项功能达到预期要求。
+
+# 逆向分析
+
+### 【目的&思路】
+
+* 【目的】通过逆向分析破解`sign`签名和`aes`加密
+* 【思路】破解`sign`签名的关键就是分析清楚`md5`之前的字符串是根据何种规则拼接的，然后根据这个规则拼接参数然后进行md5加密即可。破解`ase`加密的关键是获取”密钥“。二者的核心都是拦截加密函数，破解`sign`签名通过拦截`md5`加密函数获取`md5`之前的字符串、`aes`加密通过拦截加密函数获取形参中的key。
+
+## 【方案1】函数hook(class-dump+Logos)
+
+* ① 通过`class-dump`导出`Target.app`（将`.ipa`后缀修改为`.zip`后解压）的[头文件](https://github.com/SmileZXLee/iOSSignatureAnalysis/tree/main/Headers)，查看头文件中的内容，寻找加密的工具类，可以发现一个名为`EncryptionTool.h`的头文件，查看文件内容：
+
+  ```objective-c
+  #import <objc/NSObject.h>
+  
+  @interface EncryptionTool : NSObject
+  {
+  }
+  
+  + (id)AES128Decrypt:(id)arg1 key:(id)arg2;
+  + (id)AES128Encrypt:(id)arg1 key:(id)arg2;
+  + (id)md5Hex:(id)arg1;
+  + (id)aesDecryptWithBase64:(id)arg1 key:(id)arg2;
+  + (id)aesEncrypt:(id)arg1 key:(id)arg2;
+  
+  @end
+  ```
+
+  可以观察到这个工具类中有`+ (id)md5Hex:(id)arg1`方法，根据命名可以猜测这个函数是用于`md5`加密的，我们通过`Logos`hook这个函数：
+
+  ```objective-c
+  %hook EncryptionTool
+  + (id)md5Hex:(id)arg1{
+      NSLog(@"md5加密之前的明文：%@",arg1);
+      return %orig;
+  }
+  %end
+  ```
+
+  注入后重新运行后输入账号密码点击登录并查看打印：
+
+  ```
+  TargetApp[18861:4954135] md5加密之前的明文：mysign$#@/loginaccountzxleepasswordcbBIs8XOZJ2L5YjfuaOLAQ==1642953195950csjnjksadh
+  ```
+
+  并通过抓包查看请求体内容，与上方`md5`之前的明文进行对照：
+
+  ```json
+  {
+    "password": "cbBIs8XOZJ2L5YjfuaOLAQ==",
+    "account": "zxlee",
+    "timestamp": "1642953195950",
+    "sign": "bc7c62f09da86b2ee0c28476a70be709"
+  }
+  ```
+
+  从上方可以推测出`sign`签名的规则为：mysign$#@+sumStr(按照key+value拼接成一个字符串)+interface(接口路径:/login)+timestamp+csjnjksadh。此时`sign`签名就已被破解。
+
+* ② `EncryptionTool.h`中有两个aes相关的类，不清楚实际上用的是哪个，因此两个都hook一下：
+
+  ```objective-c
+  %hook EncryptionTool
+  + (id)AES128Encrypt:(id)arg1 key:(id)arg2{
+      NSLog(@"aes加密之前的明文：%@；aes的key：%@",arg1,arg2);
+      return %orig;
+  }
+  
+  + (id)aesEncrypt:(id)arg1 key:(id)arg2{
+      NSLog(@"aes加密之前的明文：%@；aes的key：%@",arg1,arg2);
+      return %orig;
+  }
+  %end
+  ```
+
+  注入后重新运行后输入账号密码点击登录并查看打印：
+
+  ```
+  TargetApp[18861:4954135] aes加密之前的明文：123456；aes的key：xsahdjsad890dsaf
+  ```
+
+  因此`aes`加密的key为`xsahdjsad890dsaf`，至于具体是那种`aes`加密的模式，只需要通过在线`aes`加密工具逐一验证一下即可。
+
+## 【方案2】方法追踪(class-dump+monkeyDev)
+
+* 【ps】需要导入[ZXHookUtil](https://github.com/SmileZXLee/ZXHookUtil)
+
+* ① 与【方案1】一致，通过`class-dump`导出头文件，发现`EncryptionTool.h`这个头文件，通过：
+
+  ```objective-c
+  [ZXHookUtil addClassTrace:@"EncryptionTool"];
+  ```
+
+  添加方法追踪，监视`EncryptionTool`这个类的方法调用情况，运行后输入账号密码点击登录并查看打印：
+
+  ```objective-c
+  ┌ +[Call][EncryptionTool aesEncrypt:123456 key:xsahdjsad890dsaf]
+  │ ┌ +[Call][EncryptionTool AES128Encrypt:123456 key:xsahdjsad890dsaf]
+  │ └ +[Return]cbBIs8XOZJ2L5YjfuaOLAQ==
+  └ +[Return]cbBIs8XOZJ2L5YjfuaOLAQ==
+  ┌ +[Call][EncryptionTool md5Hex:mysign$#@/loginaccountzxleepasswordcbBIs8XOZJ2L5YjfuaOLAQ==1642955401392csjnjksadh]
+  └ +[Return]cf1e6b5ddb2b51764b7e44a9b1fd080e
+  ```
+
+  由以上的打印可以看到方法调用关系，一组通过`[`连接起来的就是方法调用的起始和终止位置，可以看到在点击登录按钮之后`EncryptionTool aesEncrypt`方法内又调用了`EncryptionTool AES128Encrypt`，并且我们可以清晰看到参数和返回值，`sign`签名和`aes`加密均已破解。
+
+##【方案3】UI分析+IDA反编译(monkeyDev+IDA)
 
 
 
