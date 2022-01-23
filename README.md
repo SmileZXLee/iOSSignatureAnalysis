@@ -25,8 +25,6 @@
 
 ## AES加密
 
-### 概述&原理
-
 `aes`为`对称加密`，即加密和解密的密钥是相同的，客户端可以和服务端私下约定好一个密钥，然后客户端通过这个密钥对请求体进行加密，服务端通过这个密钥进行解密，若服务端能正常解密，则认为这是一个有效请求，通过`aes`加密可以有效防止请求被篡改，因为通过抓包看到的是`aes`加密之后的密文，抓包者不知道密钥的情况下无法获得明文信息，也无法修改明文内容。`aes`加密后的内容一般需要进行`base64`处理，因为有些`aes`加密后的字符串是不可读的。
 
 ## MD5加密
@@ -34,6 +32,250 @@
 `md5`加密是一种`不可逆的加密`，也就是明文通过`md5`加密后获得密文后，无法通过密文解密获得明文，且相同明文加密后获得的密文必定相同且唯一，所以`md5`一般也用作密码加密（这就是为什么大多数网站只能提供"重置密码功能"而不能提供"查询密码"功能的原因，因为即使是开发者也不知道用户的明文密码是什么，服务端验证密码也只是对比`md5`之后的密码）和sign加密（因`md5`是不可逆并且唯一的，所以可以避免泄露sign签名的规则，并且可以保证前后端计算出的sign的一致性）。
 
 但是`md5`也不是完全不可逆的，一些网站也推出了`md5`解密功能，但是实际基本都是使用`暴力破解字典`的方案，例如`123456`通过`md5`加密后的结果为`49ba59abbe56e057`，则已知密文为`49ba59abbe56e057`可以推算出明文为`123456`。因此密码不宜过于简单，如果是字母+数字的情况下，破解就几乎不可能。近年有报道指明`md5`已可逆、已不再安全，但是目前而言`md5`依然被广泛应用在各个需要加密的场景中，总体还是依旧可靠的。
+
+## 实现sign签名+密码aes加密(示例)
+
+* ios App+springboot登录接口sign签名+密码aes加密示例
+
+## iOS App
+
+* 在`LoginViewController`的点击登录按钮事件中，请求登录接口
+
+  ```objective-c
+  //点击了登录按钮
+  - (IBAction)loginAction:(id)sender {
+      NSString *account = self.accountTf.text;
+      NSString *password = self.pwdTf.text;
+      if(account.length && password.length){
+          //对密码进行aes加密，key是xsahdjsad890dsaf
+          password = [EncryptionTool aesEncrypt:password key:@"xsahdjsad890dsaf"];
+          //发送登录请求
+          [HttpRequest postInterface:@"/login" postData:@{@"account":account,@"password":password} callBack:^(BOOL result, id  _Nonnull data) {
+              if(result && data){
+                  int code = [data[@"code"] intValue];
+                  if(code == 0){
+                      //登录成功
+                  }
+              }
+          }];
+      }
+  }
+  ```
+
+* 在`HttpRequest`的`postInterface`方法中获取sign和timestamp
+
+  ```objective-c
+  +(void)postInterface:(NSString *)interface postData:(id)postData callBack:(kGetDataEventHandler)_result{
+      NSString *urlStr = [NSString stringWithFormat:@"%@%@",kMainUrl,interface];
+      NSURL *url = [NSURL URLWithString:urlStr];
+      NSMutableURLRequest *mr = [NSMutableURLRequest requestWithURL:url];
+      mr.HTTPMethod = @"POST";
+    	NSMutableDictionary *muDic = [postData mutableCopy];
+    	//获取&设置timestamp
+    	muDic[@"timestamp"] = [self getTimeStamp];
+    	//获取&设置sign
+    	NSString *sign = [self getSignWithDic:muDic interface:interface];
+    	muDic[@"sign"] = sign;
+    	NSString *postJson = [self getJsonStrWithDic:muDic];
+    	mr.HTTPBody = [postJson dataUsingEncoding:NSUTF8StringEncoding];
+    	[mr setValue:@"application/json" forHTTPHeaderField:@"Content-Type"];
+      mr.timeoutInterval = TimeOutSec;
+      [NSURLConnection sendAsynchronousRequest:mr queue:[NSOperationQueue mainQueue] completionHandler:^(NSURLResponse * _Nullable response, NSData * _Nullable data, NSError * _Nullable connectionError) {
+          if (connectionError) {
+              _result(NO,connectionError);
+          }else{
+              NSString *dataStr = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
+              NSData *reData = [dataStr dataUsingEncoding:NSUTF8StringEncoding];
+              _result(YES,[NSJSONSerialization JSONObjectWithData:reData options:NSJSONReadingMutableLeaves error:nil]);
+          }
+      }];
+  }
+  ```
+
+* 在`HttpRequest`的`getSignWithDic`方法中计算sign
+
+  ```objective-c
+  +(NSString *)getSignWithDic:(NSDictionary *)dic interface:(NSString *)interface{
+      //将请求体中的key按照a-z排列
+      NSArray *sortedKeys = [[dic allKeys] sortedArrayUsingSelector: @selector(compare:)];
+      NSString *sumStr = @"";
+      //请求体中排除timestamp，并且按照key+value拼接成一个字符串
+      for (NSString *key in sortedKeys) {
+          if(![key isEqualToString:@"timestamp"]){
+              NSObject *value = [dic valueForKey:key];
+              NSString *valueStr = [NSString stringWithFormat:@"%@",value];
+              sumStr = [sumStr stringByAppendingString:[NSString stringWithFormat:@"%@%@",key,valueStr]];
+          }
+      }
+    	//设计自己的sign签名规则
+      //mysign$#@+sumStr(按照key+value拼接成一个字符串)+interface(接口路径:/login)+timestamp+csjnjksadh，然后md5加密
+      sumStr = [NSString stringWithFormat:@"mysign$#@%@%@%@csjnjksadh",interface,sumStr,dic[@"timestamp"]];
+      NSString *sign = [EncryptionTool md5Hex:[NSString stringWithFormat:@"%@",sumStr]];
+      return sign;
+  }
+  ```
+
+## JAVA后端接口
+
+* 在`LoginController`中接收`/login`请求
+
+  ```java
+  @RestController
+  @RequestMapping("/api/v1/")
+  public class LoginController {
+      @RequestMapping("/login")
+      public CommonResponse login(@RequestBody LoginVO vo) {
+          System.out.println("请求参数=> " + vo.toString());
+  
+          //签名校验
+          //一般放在拦截器/过滤器中统一处理，此处为了方便直接写在控制器中
+          if(!SignUtils.checkSign(vo,"/login")){
+              return new CommonResponse().error("签名校验失败");
+          }
+  
+          String account = vo.getAccount();
+          String password = vo.getPassword();
+          //----------begin账号和密码判空操作-----------
+          if(null == account || account.isEmpty()){
+              return new CommonResponse().error("账号不能为空");
+          }
+          if(null == password || password.isEmpty()){
+              return new CommonResponse().error("密码不能为空");
+          }
+          //----------end-----------
+  
+          //密码aes解密
+          try {
+              password = AESUtils.decrypt(password,"xsahdjsad890dsaf");
+          } catch (Exception e) {
+              e.printStackTrace();
+              return new CommonResponse().error("密码解密失败");
+          }
+  
+          //对账号密码进行简单的校验
+          //账号为：zxlee，密码为123456时，可以登录成功
+          if(!"zxlee".equals(account)){
+              return new CommonResponse().error("用户名不存在");
+          }
+  
+          if(!"123456".equals(password)){
+              return new CommonResponse().error("密码错误");
+          }
+  
+          return new CommonResponse("登录成功").success();
+      }
+  }
+  ```
+
+* 在`SignUtils`中计算和验证sign
+
+  ```java
+  public class SignUtils {
+      //用于在内存中缓存合法的sign，实际项目中建议存在redis中或用Spring Cache之类的进行管理
+      static ArrayList<String> signCahceArr = new ArrayList<>();
+  
+      /**
+      * @Description: 计算签名
+      * @Param: [vo, inter]
+      * @return: java.lang.String
+      * @Author: zxlee
+      * @Date: 2022/1/21
+      */
+      public static String getSign(CommonVO vo,String inter){
+          String result = "";
+          Map<String,Object> map = (Map<String,Object>) JSON.toJSON(vo);
+          Set set = map.keySet();
+          Object[] arr = set.toArray();
+          Arrays.sort(arr);
+          for(Object key : arr){
+              if(!"timestamp".equals(key) && !"sign".equals(key)){
+                  result += key + map.get(key).toString();
+              }
+          }
+          result = "mysign$#@" + inter + result + map.get("timestamp") + "csjnjksadh";
+          return DigestUtils.md5DigestAsHex(result.getBytes());
+      }
+  
+      /**
+      * @Description: 验证签名是否合法
+      * @Param: [vo, inter]
+      * @return: java.lang.Boolean
+      * @Author: zxlee
+      * @Date: 2022/1/21
+      */
+      public static Boolean checkSign(CommonVO vo,String inter){
+          String sign = vo.getSign();
+          //如果入参中sign不存在，直接返回false
+          if(null == sign || sign.isEmpty()){
+              return false;
+          }
+          //如果signCahceArr中已经存在此sign，则直接返回false，可有效避免请求重放
+          if(signCahceArr.contains(sign)){
+              return false;
+          }
+          //如果入参中sign不存在，直接返回false
+          String calcSign = getSign(vo,inter);
+          Boolean equals = calcSign.equals(sign);
+          if(equals){
+              //如果签名验证通过，将合法的sign存到缓存中，因为添加了timestamp参数，可以正常请求下保证同一客户端每次请求sign必定不同
+              //若考虑高并发情况，建议根据ip区分一下sign
+              signCahceArr.add(sign);
+          }
+          return equals;
+      }
+  }
+  ```
+
+## 验证
+
+* 运行iOS App，输入账号密码，点击登录，登录流程正常。
+
+* 开启`Charles`进行全局代理抓包，重复上述步骤，拦截到登录请求
+
+  请求URL：http://api.zxlee.cn:6303/api/v1/login
+
+  请求体：
+
+  ```json
+  {
+  	"password": "cbBIs8XOZJ2L5YjfuaOLAQ==",
+  	"account": "zxlee",
+  	"timestamp": "1642929374691",
+  	"sign": "469751ce43abf684e8fbf6786d8343b0"
+  }
+  ```
+
+  响应：
+
+  ```json
+  {
+  	"message": "success",
+  	"code": 0,
+  	"data": "登录成功"
+  }
+  ```
+
+  修改请求体内容，重新提交请求，响应：
+
+  ```json
+  {
+  	"message": "签名校验失败",
+  	"code": 400,
+  	"data": null
+  }
+  ```
+
+  在`Charles`中右键请求，点击`Repeat`进行请求重放（不修改任何参数），响应：
+
+  ```json
+  {
+  	"message": "签名校验失败",
+  	"code": 400,
+  	"data": null
+  }
+  ```
+
+  经过测试，各项功能达到预期要求。
 
 ## 待续...
 
