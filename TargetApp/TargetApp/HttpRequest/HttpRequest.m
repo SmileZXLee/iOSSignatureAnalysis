@@ -30,7 +30,9 @@
     if(postData){
         mr.HTTPMethod = @"POST";
         NSMutableDictionary *muDic = [postData mutableCopy];
+        //获取&设置timestamp
         muDic[@"timestamp"] = [self getTimeStamp];
+        //获取&设置sign
         NSString *sign = [self getSignWithDic:muDic interface:interface];
         muDic[@"sign"] = sign;
         NSString *postJson = [self getJsonStrWithDic:muDic];
@@ -78,9 +80,13 @@
     NSDictionary *dic = [NSJSONSerialization JSONObjectWithData:data options:NSJSONReadingAllowFragments error:nil];
     return dic;
 }
+
+//获取sign
 +(NSString *)getSignWithDic:(NSDictionary *)dic interface:(NSString *)interface{
+    //将请求体中的key按照a-z排列
     NSArray *sortedKeys = [[dic allKeys] sortedArrayUsingSelector: @selector(compare:)];
     NSString *sumStr = @"";
+    //请求体中排除timestamp，并且按照key+value拼接成一个字符串
     for (NSString *key in sortedKeys) {
         if(![key isEqualToString:@"timestamp"]){
             NSObject *value = [dic valueForKey:key];
@@ -88,11 +94,14 @@
             sumStr = [sumStr stringByAppendingString:[NSString stringWithFormat:@"%@%@",key,valueStr]];
         }
     }
+    //设计自己的sign签名规则
+    //mysign$#@+sumStr(按照key+value拼接成一个字符串)+interface(接口路径:/login)+timestamp+csjnjksadh，然后md5加密
     sumStr = [NSString stringWithFormat:@"mysign$#@%@%@%@csjnjksadh",interface,sumStr,dic[@"timestamp"]];
     NSString *sign = [EncryptionTool md5Hex:[NSString stringWithFormat:@"%@",sumStr]];
     return sign;
 }
 
+//获取timestamp
 + (NSString *)getTimeStamp{
     NSDate *now = [NSDate date];
     NSString *timeStamp = [NSString stringWithFormat:@"%ld", (long)([now timeIntervalSince1970] * 1000)];

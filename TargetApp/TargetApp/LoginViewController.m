@@ -31,7 +31,9 @@
     NSString *account = self.accountTf.text;
     NSString *password = self.pwdTf.text;
     if(account.length && password.length){
+        //对密码进行aes加密，key是xsahdjsad890dsaf
         password = [EncryptionTool aesEncrypt:password key:@"xsahdjsad890dsaf"];
+        //发送登录请求
         [HttpRequest postInterface:@"/login" postData:@{@"account":account,@"password":password} callBack:^(BOOL result, id  _Nonnull data) {
             if(result && data){
                 int code = [data[@"code"] intValue];
