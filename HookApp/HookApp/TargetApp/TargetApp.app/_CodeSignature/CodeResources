@@ -16,21 +16,13 @@
 		<data>
 		U0x8EM0781fCPb62BbZIXKeDlZ4=
 		</data>
-		<key>Base.lproj/Main.storyboardc/BYZ-38-t0r-view-8bC-Xf-vdC.nib</key>
-		<data>
-		IpBtA9yVooRH+JnItmHMGPSlTpY=
-		</data>
-		<key>Base.lproj/Main.storyboardc/Info.plist</key>
-		<data>
-		MDrKFvFWroTb0+KEbQShBcoBvo4=
-		</data>
-		<key>Base.lproj/Main.storyboardc/UIViewController-BYZ-38-t0r.nib</key>
-		<data>
-		2xGrZ+x13fja/LmvdBt9QvoPa/o=
-		</data>
 		<key>Info.plist</key>
 		<data>
-		cPn2Dz0ZOuIZcfhN+HCDsH/V578=
+		d565btPTEcUUEIzCcAimbDbZHeU=
+		</data>
+		<key>LoginViewController.nib</key>
+		<data>
+		oK76OM8eMs65GRdb/NCoR7skoYM=
 		</data>
 		<key>PkgInfo</key>
 		<data>
@@ -64,25 +56,11 @@
 			cWq7q+iQcmpSoaFGecnyPdKFEPFwRD3slgUmxFADkVs=
 			</data>
 		</dict>
-		<key>Base.lproj/Main.storyboardc/BYZ-38-t0r-view-8bC-Xf-vdC.nib</key>
+		<key>LoginViewController.nib</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			4j7X4gkBeY386UOl7pgd8YSkVuxbO4RBhfa9QCDF4dQ=
-			</data>
-		</dict>
-		<key>Base.lproj/Main.storyboardc/Info.plist</key>
-		<dict>
-			<key>hash2</key>
-			<data>
-			PpvapAjR62rl6Ym4E6hkTgpKmBICxTaQXeUqcpHmmqQ=
-			</data>
-		</dict>
-		<key>Base.lproj/Main.storyboardc/UIViewController-BYZ-38-t0r.nib</key>
-		<dict>
-			<key>hash2</key>
-			<data>
-			O8b5L0isCQDSXRRQp98E6YhS5jn2kbC538YWvzxxMcg=
+			ABbt04XXnIZfIM9SRcF+70pOKRZTTxapnzCVrj7fY8g=
 			</data>
 		</dict>
 		<key>embedded.mobileprovision</key>

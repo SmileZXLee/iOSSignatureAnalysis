@@ -11,7 +11,7 @@
 
 @implementation ZXCodeFloor
 +(void)initAction{
-    [ZXHookUtil addClassTrace:@"HttpRequest"];
+    [ZXHookUtil addClassTrace:@"EncryptionTool"];
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
         [ZXHookUtil addBtnCallBack:^(UIButton *button) {
             NSLog(@"当前控制器--%@",[ZXHookUtil getTopVC]);
